@@ -7,38 +7,43 @@ from src.gallPeaks import GallPeaks
 
 class Graph:
     dpi = 250
+    name = ""
+    x = []
+    y = []
 
-    def __init__(self, dpi):
-        self.dpi = dpi 
+    def __init__(self, dpi: int, spectra: Spectra):
+        self.dpi = dpi
+        x = spectra.shifts
+        y = spectra.intensities
+        name = spectra.name
 
-    def plotGraph(self, limits, legend, spectra: Spectra, path, override):
+    def plotGraph(self, limits, legend, path, override):
         if limits == ():
             limits = (200, 3400)
-        if legend == []:
+        if not legend:
             legend = ["widmo"]
-        graphPath = path + spectra.name + ".png"
+        graphPath = path + self.name + ".png"
         if os.path.exists(graphPath) and (not override):
             return
         mlt.use("Cairo")
         figure, axis = plt.subplots()
         axis.set_ylabel("Intensywność [j.u.]")
-        axis.set(yticklabels = []) # removing tick labels
+        axis.set(yticklabels = [])  # removing tick labels
         axis.set_xlabel("Przesunięcie Ramana [cm$^{-1}$]")
         plt.xlim(limits)
-        plt.plot(spectra.shifts, spectra.intensities)
+        plt.plot(self.x, self.y)
         plt.legend(legend)
         plt.gca().invert_xaxis()
-        plt.savefig(path + spectra.name + ".png", dpi=self.dpi)
+        plt.savefig(path + self.name + ".png", dpi=self.dpi)
         plt.close()
 
-
-    def plotGraphWithGallPeaks(self, path: str, spectraName: str):
+    def plotGraphWithGallPeaks(self, path: str):
         peaks = GallPeaks()
         figure, axis = plt.subplots()
-        plt.plot(self.xData, self.yData)
+        plt.plot(self.x, self.y)
         plt.xlim((250, 3400))
         for peakPosition in peaks.peaks:
-            plt.plot([peakPosition, peakPosition], [np.min(self.yData), np.max(self.yData)], linewidth=0.5)
+            plt.plot([peakPosition, peakPosition], [np.min(self.y), np.max(self.x)], linewidth=0.5)
         plt.gca().invert_xaxis()
-        plt.savefig(path + "gall_" + spectraName + ".png", dpi = self.dpi)
+        plt.savefig(path + "gall_" + self.name + ".png", dpi = self.dpi)
         plt.close()

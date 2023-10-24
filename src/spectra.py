@@ -11,24 +11,19 @@ class Spectra:
     def __init__(self):
         pass
 
-    
     def setSpectraName(self, name: str):
         self.name = name
-
 
     def setSpectraIntensities(self, intensities):
         self.intensities = intensities
 
-
     def setSpectraShifts(self, shifts):
         self.shifts = shifts
-
 
     def importDataFromCSV(self, filePath):
         data = np.loadtxt(filePath, delimiter = ',')
         self.shifts = np.array(data[:, 0], dtype = 'float')
         self.intensities = np.array(data[:, 1], dtype = 'float')
-
 
     def crop(self, shiftLimits, suffix: str):
         croppedShifts = np.array([])
@@ -50,8 +45,7 @@ class Spectra:
 
         return newSpectra
 
-
-    def saveSpectra(self, path: str, dirName: str, override: boolean):
+    def saveSpectra(self, path: str, dirName: str, override: bool):
         dirPath = os.path.join(path, dirName)
         if not os.path.exists(dirPath):
             os.mkdir(dirPath)
@@ -61,11 +55,10 @@ class Spectra:
             return
         file = open(dirPath + self.name + ".CSV", "w")
         for index in range(len(self.shifts)):
-           file.write(str(self.shifts[index]) + "," + str(self.intensities[index]) + "\n") 
+            file.write(str(self.shifts[index]) + "," + str(self.intensities[index]) + "\n")
         file.close()
 
-        
-    def findPeaks(self, path: str, fileName: str, save: boolean):
+    def findPeaks(self, path: str, fileName: str, save: bool):
         peaksIndexes = find_peaks(self.intensities, prominence = 2)[0]
         peaksSpectraShifts = np.array(self.shifts[peaksIndexes], dtype= 'float')
         filteredPeaksShifts = np.array([], dtype = 'float')

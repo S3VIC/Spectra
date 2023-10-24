@@ -7,32 +7,39 @@ from src.fileManager import FileManager
 from src.graph import Graph
 from src.parameters import SpectraFragments
 
-def getSpectraList(fileManager: FileManager):
-    spectraList = np.array([])
-    for file in fileManager.fileList:
+
+def getSpectraList(manager: FileManager):
+    spectras = []
+    for file in manager.fileList:
         spectra = Spectra()
         spectra.setSpectraName(file[:-4])
         spectra.importDataFromCSV(path + file)
-        spectraList = np.append(spectraList, spectra)
-    return spectraList
+        spectras.append(spectra)
+    return spectras
 
 
-def plotSpectrasWithGallPeaks(spectraList: List[Spectra], path: str):
-    for spectra in spectraList:
-        graph = Graph(spectra.shifts, spectra.intensities)
-        graph.plotGraphWithGallPeaks(path = path, spectraName = spectra.name)
+def plotSpectrasWithGallPeaks(spectras : List[Spectra], path: str):
+    for spectra in spectras:
+        graph = Graph(dpi = 250, spectra = spectra)
+        graph.plotGraphWithGallPeaks(path = path)
 
 
-def getCroppedSpectras(spectraList: List[Spectra], limits, suffix: str):
-    newSpectraList = np.array([])
-    for spectra in spectraList:
+def getCroppedSpectras(spectras: List[Spectra], limits, suffix: str):
+    newSpectras = []
+    for spectra in spectras:
         newSpectra = spectra.crop(shiftLimits = limits, suffix = suffix)
-        newSpectraList = np.append(newSpectraList, newSpectra)
+        newSpectras.append(newSpectra)
 
-    return newSpectraList
+    return newSpectras
 
-def graphSpectras(spectras: List[Spectra], path: str, dirName: str):
+
+def graphSpectras(spectras: List[Spectra], path: str, dirName: str, override: bool, limits: tuple):
+    for spectra in spectras:
+        spectra.saveSpectra(path = path, dirName = dirName, override = override)
+        graph = Graph(dpi = 250, spectra = spectra)
+        graph.plotGraph(limits = limits, legend = [], path = path + dirName, override = override)
     return
+
 
 if __name__ == '__main__':
     folders = ["archival/", "dyneema/", "medit/", "vistula/", "wzorzec/", "wzorzec_miliQ/"]
@@ -41,18 +48,20 @@ if __name__ == '__main__':
     for folder in folders:
         path = os.path.join(dataPath, folder + "csvCombined/")
         fileManager = FileManager(path = path)
-        spectraList : List[Spectra] = getSpectraList(fileManager = fileManager)
+        spectraList : List[Spectra] = getSpectraList(manager = fileManager)
         fragments: SpectraFragments = SpectraFragments()
         for index in range(len(fragments.rangeNames)):
-            croppedSpectras: List[Spectra] = getCroppedSpectras(spectraList = spectraList,
+            croppedSpectras: List[Spectra] = getCroppedSpectras(spectras = spectraList,
                                                                 limits = fragments.rangeLimits[index],
                                                                 suffix = fragments.rangeNames[index])
-            for spectraIndex in range(len(croppedSpectras)):
-                dirName = fragments.rangeNames[index] + "/"
-                croppedSpectras[spectraIndex].saveSpectra(path = path, dirName = dirName, override = override)
-                graph = Graph(dpi = 250)
-                graph.plotGraph(limits = fragments.rangeLimits[index], legend = [], spectra = croppedSpectras[spectraIndex], path = path + dirName, override = override)
-        
+
+            dirName = fragments.rangeNames[index] + "/"
+            graphSpectras(limits = fragments.rangeLimits[index],
+                          spectras = croppedSpectras,
+                          path = path,
+                          dirName = dirName,
+                          override = override)
+
         for spectraIndex in croppedSpectras:
             dataFileName = fragments.rangeNames[index] + ".CSV"
             
