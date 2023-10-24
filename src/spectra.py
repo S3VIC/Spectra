@@ -51,7 +51,6 @@ class Spectra:
             os.mkdir(dirPath)
         filePath = dirPath + self.name + ".CSV"
         if os.path.exists(filePath) and (not override):
-            print("Passing")
             return
         file = open(dirPath + self.name + ".CSV", "w")
         for index in range(len(self.shifts)):

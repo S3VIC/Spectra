@@ -3,9 +3,10 @@ import os
 
 class FileManager:
     fileList = np.array([])
-
+    path = ""
     def __init__(self, path: str):
         self.fileList = np.array([])
+        self.path = path
         for fileName in os.listdir(path):
             if fileName[-3:].upper() != "CSV":
                 continue

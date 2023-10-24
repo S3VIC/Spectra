@@ -4,6 +4,8 @@ import numpy as np
 from src.spectra import Spectra
 import os 
 from src.gallPeaks import GallPeaks
+from src.logger import Logger
+
 
 class Graph:
     dpi = 250
@@ -13,9 +15,9 @@ class Graph:
 
     def __init__(self, dpi: int, spectra: Spectra):
         self.dpi = dpi
-        x = spectra.shifts
-        y = spectra.intensities
-        name = spectra.name
+        self.x = spectra.shifts
+        self.y = spectra.intensities
+        self.name = spectra.name
 
     def plotGraph(self, limits, legend, path, override):
         if limits == ():
@@ -35,6 +37,7 @@ class Graph:
         plt.legend(legend)
         plt.gca().invert_xaxis()
         plt.savefig(path + self.name + ".png", dpi=self.dpi)
+        Logger.logInfo(message = "Saved graph " + graphPath)
         plt.close()
 
     def plotGraphWithGallPeaks(self, path: str):
@@ -46,4 +49,5 @@ class Graph:
             plt.plot([peakPosition, peakPosition], [np.min(self.y), np.max(self.x)], linewidth=0.5)
         plt.gca().invert_xaxis()
         plt.savefig(path + "gall_" + self.name + ".png", dpi = self.dpi)
+        Logger.logInfo(message = "Saved graph for " + self.name)
         plt.close()
