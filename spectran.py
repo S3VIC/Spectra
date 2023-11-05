@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import numpy as np
 from typing import List
 from src.spectra import Spectra
 from src.fileManager import FileManager
@@ -25,12 +26,33 @@ if __name__ == '__main__':
                                   path=path,
                                   dirName=dirName,
                                   override=override)
-
             for spectra in croppedSpectras:
+                spectra.findPeaks()
+                saveRS = False
                 for name, values in fragments.signals.items():
                     if values[0] == index + 1:
                         dataFileName = name + "_rs_stability.CSV"
-                        newFilePath = dataPath + folder + dataFileName
+                        folderPath = dataPath + folder + "rsStability/"
+                        newFilePath = folderPath + dataFileName
+                        if not os.path.isdir(folderPath) and saveRS:
+                            os.mkdir(folderPath)
+
+                        peakStats = spectra.findPeakDifferences(signal = values[1])
+                        #print("Found diff: " + str(peakStats[0]) + " with position: " + str(peakStats[1]) +
+                        #      " for reference: " + str(values[1]))
+                        if saveRS:
+                            print("Saving rs stability data to: " + newFilePath)
+                            Manager.savePeakStats(filePath = newFilePath, stats = peakStats)
+                    else:
+                        continue
+
+                Manager.correctAsLS(spectra = spectra, lamb = 1e8, termPrecision=0.25)
+                spectrasPath = path + dirName
+                Manager.saveAsLSCorrection(spectra = spectra, path = spectrasPath, dirName = "asLS/", override = False,
+                                           plot = False)
+                Manager.correctArLS(spectra = spectra, lam = 1e8, asymWeight = 0.01)
+                Manager.saveArLSCorrection(spectra = spectra, path = spectrasPath, dirName = "arLS/", override = True,
+                                           plot = True)
 
         # TO DO:
         # 0) Shift stability (to copy + eventually some corrections)

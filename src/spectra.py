@@ -2,13 +2,16 @@ import numpy as np
 import os
 from scipy.signal import find_peaks
 
-
 class Spectra:
     intensities = []
     shifts = []
     name: str = ""
+    peakShifts = []
+    asLSIntensities = []
+    arLSIntensities = []
     
     def __init__(self):
+        self.peakShifts = []
         pass
 
     def setSpectraName(self, name: str):
@@ -52,17 +55,35 @@ class Spectra:
         filePath = dirPath + self.name + ".CSV"
         if os.path.exists(filePath) and (not override):
             return
-        file = open(dirPath + self.name + ".CSV", "w")
+        file = open(filePath, "w")
         for index in range(len(self.shifts)):
             file.write(str(self.shifts[index]) + "," + str(self.intensities[index]) + "\n")
         file.close()
 
-    def findPeaks(self, path: str, fileName: str, save: bool):
+    def findPeaks(self):
         peaksIndexes = find_peaks(self.intensities, prominence = 2)[0]
-        peaksSpectraShifts = np.array(self.shifts[peaksIndexes], dtype= 'float')
-        filteredPeaksShifts = np.array([], dtype = 'float')
+        self.peakShifts = np.array(self.shifts[peaksIndexes], dtype= 'float')
+
+    def findPeakDifferences(self, signal: int):
+        if len(self.peakShifts) == 0:
+            return -1, -1, -1
+        diff = signal - self.peakShifts[0]
+        peakPosition = self.peakShifts[0]
+        for shiftIndex in range(1, len(self.peakShifts)):
+            newDiff = signal - self.peakShifts[shiftIndex]
+            if abs(newDiff) <= abs(diff):
+                diff = newDiff
+                peakPosition = self.peakShifts[shiftIndex]
+            else:
+                continue
+
+        return diff, peakPosition, signal
 
 
 
-        return
+    def saveArLSCorrection(self, path: str, dirName: str, override: bool):
+        pass
 
+    def saveAsLSGraph(self, path: str):
+        graph = Graph(spectra = self, dpi = 250)
+        graph.plotGraphAsLS(spectra = self, path = path)

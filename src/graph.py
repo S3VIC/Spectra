@@ -51,3 +51,37 @@ class Graph:
         plt.savefig(path + "gall_" + self.name + ".png", dpi = self.dpi)
         Logger.logInfo(message = "Saved graph for " + self.name)
         plt.close()
+
+    def plotGraphAsLS(self, spectra: Spectra, path: str):
+        legend = ["widmo", "widmo poprawione", "linia bazowa"]
+        mlt.use("Cairo")
+        figure, axis = plt.subplots()
+        axis.set_ylabel("Intensywność [j.u.]")
+        axis.set(yticklabels = [])  # removing tick labels
+        axis.set_xlabel("Przesunięcie Ramana [cm$^{-1}$]")
+        plt.plot(spectra.shifts, spectra.intensities)
+        plt.plot(spectra.shifts, spectra.asLSIntensities)
+        plt.plot(spectra.shifts, spectra.intensities - spectra.asLSIntensities)
+        plt.legend(legend)
+        plt.gca().invert_xaxis()
+        graphPath = path + "asLS-" + self.name + ".png"
+        plt.savefig(graphPath, dpi = self.dpi)
+        print("Saved graph to: " + graphPath)
+        plt.close()
+
+    def plotGraphArLS(self, spectra: Spectra, path: str):
+        legend = ["widmo", "widmo poprawione", "linia bazowa"]
+        mlt.use("Cairo")
+        figure, axis = plt.subplots()
+        axis.set_ylabel("Intensywność [j.u.]")
+        axis.set(yticklabels = [])  # removing tick labels
+        axis.set_xlabel("Przesunięcie Ramana [cm$^{-1}$]")
+        plt.plot(spectra.shifts, spectra.intensities)
+        plt.plot(spectra.shifts, spectra.asLSIntensities)
+        plt.plot(spectra.shifts, spectra.intensities - spectra.asLSIntensities)
+        plt.legend(legend)
+        plt.gca().invert_xaxis()
+        graphPath = path + "arLS-" + self.name + ".png"
+        plt.savefig(graphPath, dpi = self.dpi)
+        print("Saved graph to: " + graphPath)
+        plt.close()
