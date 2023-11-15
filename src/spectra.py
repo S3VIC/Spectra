@@ -9,9 +9,14 @@ class Spectra:
     peakShifts = []
     asLSIntensities = []
     arLSIntensities = []
-    
+
     def __init__(self):
-        self.peakShifts = []
+        intensities = []
+        shifts = []
+        name: str = ""
+        peakShifts = []
+        asLSIntensities = []
+        arLSIntensities = []
         pass
 
     def setSpectraName(self, name: str):
@@ -42,7 +47,7 @@ class Spectra:
             croppedIntensities = np.append(croppedIntensities, intensity)
             
         newSpectra = Spectra()
-        newSpectra.setSpectraName(suffix + "_" + self.name)
+        newSpectra.setSpectraName(self.name)
         newSpectra.setSpectraIntensities(croppedIntensities)
         newSpectra.setSpectraShifts(croppedShifts)
 
@@ -79,11 +84,16 @@ class Spectra:
 
         return diff, peakPosition, signal
 
+    def LoadArLSCorrection(self, path: str, dirName: str):
+        dirPath = os.path.join(path, dirName)
+        fileName = self.name + ".CSV"
+        filePath = dirPath + fileName
+        data = np.loadtxt(fname=filePath, delimiter=",")
+        self.arLSIntensities = np.array(data[:, 1], dtype='float')
 
-
-    def saveArLSCorrection(self, path: str, dirName: str, override: bool):
-        pass
-
-    def saveAsLSGraph(self, path: str):
-        graph = Graph(spectra = self, dpi = 250)
-        graph.plotGraphAsLS(spectra = self, path = path)
+    def LoadAsLSCorrection(self, path: str, dirName: str):
+        dirPath = os.path.join(path, dirName)
+        fileName = self.name + ".CSV"
+        filePath = dirPath + fileName
+        data = np.loadtxt(fname=filePath, delimiter=",")
+        self.asLSIntensities = np.array(data[:, 1], dtype='float')

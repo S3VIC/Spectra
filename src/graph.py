@@ -85,3 +85,42 @@ class Graph:
         plt.savefig(graphPath, dpi = self.dpi)
         print("Saved graph to: " + graphPath)
         plt.close()
+
+    def plotGraphAsLSArLSCombined(self, spectra: Spectra, path: str):
+        legend = ("widmo", "asLS", "arLS")
+        mlt.use("Cairo")
+        figure, axis = plt.subplots()
+        axis.set_ylabel("Intensywność [j.u.]")
+        axis.set(yticklabels = [])  # removing tick labels
+        axis.set_xlabel("Przesunięcie Ramana [cm$^{-1}$]")
+        plt.plot(spectra.shifts, spectra.intensities)
+        asLSbaseline = spectra.intensities - spectra.asLSIntensities
+        arLSbaseline = spectra.intensities - spectra.arLSIntensities
+        plt.plot(spectra.shifts, asLSbaseline)
+        plt.plot(spectra.shifts, arLSbaseline)
+        plt.legend(legend)
+        plt.gca().invert_xaxis()
+        graphPath = path + "comparison-" + self.name + ".png"
+        plt.savefig(graphPath, dpi = self.dpi)
+        print("Saved comparison graph to: " + graphPath)
+        plt.close()
+
+    def plotDeconvFit(self, spectra: Spectra, fit, path: str, override: bool):
+        if not os.path.exists(path):
+            os.mkdir(path)
+        if os.path.exists(path + self.name + ".png") and not override:
+            return
+        legend = ("widmo", "dopasowanie")
+        mlt.use("Cairo")
+        figure, axis = plt.subplots()
+        axis.set_ylabel("Intensywność [j.u.]")
+        axis.set(yticklabels=[])  # removing tick labels
+        axis.set_xlabel("Przesunięcie Ramana [cm$^{-1}$]")
+        plt.plot(spectra.shifts, spectra.intensities)
+        plt.plot(spectra.shifts, fit)
+        plt.legend(legend)
+        plt.gca().invert_xaxis()
+        graphPath = path + self.name + ".png"
+        plt.savefig(graphPath, dpi=self.dpi)
+        print("Saved deconv fit graph to: " + graphPath)
+        plt.close()
