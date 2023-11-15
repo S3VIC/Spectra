@@ -11,12 +11,6 @@ class Spectra:
     arLSIntensities = []
 
     def __init__(self):
-        intensities = []
-        shifts = []
-        name: str = ""
-        peakShifts = []
-        asLSIntensities = []
-        arLSIntensities = []
         pass
 
     def setSpectraName(self, name: str):

@@ -51,24 +51,22 @@ if __name__ == '__main__':
 
                 spectrasPath = path + dirName
 
-                if not Manager.CheckIfSpectraAsLSCorrected(spectra = spectra, path = spectrasPath, dirName = "asLS/"):
-                    Manager.correctAsLS(spectra = spectra, lamb = 1e8, termPrecision=0.25)
+                if not Manager.CheckIfSpectraAsLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "asLS/"):
+                    Manager.correctAsLS(spectra = spectra, lamb = 3e8, termPrecision=0.32)
                     Manager.saveAsLSCorrection(spectra = spectra, path = spectrasPath, dirName = "asLS/",
-                                               override = False, plot = False)
+                                               override = True, plot = True)
                 else:
-                    print("Loading existing asLS data.")
                     spectra.LoadAsLSCorrection(path = spectrasPath, dirName = "asLS/")
 
-                if not Manager.CheckIfSpectraArLSCorrected(spectra = spectra, path = spectrasPath, dirName = "arLS/"):
-                    Manager.correctArLS(spectra = spectra, lam = 1e8, asymWeight = 0.01)
+                if not Manager.CheckIfSpectraArLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "arLS/"):
+                    Manager.correctArLS(spectra = spectra, lam = 3e8, asymWeight = 0.01)
                     Manager.saveArLSCorrection(spectra = spectra, path = spectrasPath, dirName = "arLS/",
-                                               override = False, plot = False)
+                                               override = True, plot = True)
                 else:
-                    print("Loading existing arLS data.")
                     spectra.LoadArLSCorrection(path = spectrasPath, dirName = "arLS/")
 
                 Manager.saveArLSAsLSComparison(spectra = spectra, path = spectrasPath, dirName = "methodComparison/",
-                                               override = False, plot = True)
+                                               override = False, plot = False)
 
     for probeType in probeTypeDirs:
         path = os.path.join(rootFolder, probeType + "csvCombined/")

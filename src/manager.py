@@ -18,43 +18,33 @@ class Manager:
     @staticmethod
     def getSpectraList(manager: FileManager) -> np.array:
         spectras = np.array([])
-        Logger.logInfo(message="-----Importing data-----")
         for file in manager.fileList:
-            Logger.logInfo("Importing data for " + file)
             spectra = Spectra()
             spectra.setSpectraName(file[:-4])
             spectra.importDataFromCSV(manager.path + file)
             spectras = np.append(spectras, spectra)
-            Logger.logInfo(message="Imported data for " + file)
-        Logger.logInfo(message="-----Finished importing data-----")
         return spectras
 
     @staticmethod
     def plotSpectrasWithGallPeaks(spectras: List[Spectra], path: str):
-        Logger.logInfo(message="-----Plotting graphs with Gal peaks-----")
         for spectra in spectras:
             graph = Graph(dpi=250, spectra=spectra)
             graph.plotGraphWithGallPeaks(path=path)
-        Logger.logInfo(message="-----Finished plotting graphs with Gal peaks-----")
 
     @staticmethod
     def getCroppedSpectras(spectras: List[Spectra], limits: object, suffix: str) -> np.array:
         newSpectras = np.array([])
-        Logger.logInfo(message="-----Starting cropping graphs-----")
         for spectra in spectras:
             newSpectra = spectra.crop(shiftLimits=limits, suffix=suffix)
             newSpectras = np.append(newSpectras, newSpectra)
-        Logger.logInfo(message="-----Finished cropping graphs-----")
         return newSpectras
 
     @staticmethod
     def graphSpectras(spectras: List[Spectra], path: str, dirName: str, override: bool, limits: tuple):
-        Logger.logInfo(message="-----Starting plotting graphs-----")
         for spectra in spectras:
             spectra.saveSpectra(path=path, dirName=dirName, override=override)
             graph = Graph(dpi=250, spectra=spectra)
             graph.plotGraph(limits=limits, legend=[], path=path + dirName, override=override)
-        Logger.logInfo(message="-----Finished plotting graphs-----")
         return
 
     @staticmethod
@@ -94,7 +84,6 @@ class Manager:
             w = wt
 
         newSignal = spectra.intensities - estBaseline
-        print("Finished correcting " + spectra.name)
         spectra.asLSIntensities = newSignal
 
     @staticmethod
@@ -117,8 +106,6 @@ class Manager:
                     w[i] = 1 - asymWeight
 
         newSignal = spectra.intensities - estBaseline
-        print("Finished correcting " + spectra.name)
-
         spectra.arLSIntensities = newSignal
 
     @staticmethod
@@ -148,7 +135,7 @@ class Manager:
             return
         file = open(filePath, "w")
         for index in range(len(spectra.asLSIntensities)):
-            file.write(str(spectra.shifts[index]) + "," + str(spectra.asLSIntensities[index]) + "\n")
+            file.write(str(spectra.shifts[index]) + "," + str(spectra.arLSIntensities[index]) + "\n")
 
         if plot:
             graph = Graph(spectra=spectra, dpi=250)
@@ -166,21 +153,21 @@ class Manager:
         pass
 
     @staticmethod
-    def CheckIfSpectraAsLSCorrected(spectra: Spectra, path: str, dirName: str):
+    def CheckIfSpectraAsLSCorrected(spectraName: str, path: str, dirName: str):
         dirPath = os.path.join(path, dirName)
         if not os.path.exists(dirPath):
             return False
-        if os.path.exists(dirPath + spectra.name + ".CSV"):
+        if os.path.exists(dirPath + spectraName + ".CSV"):
             return True
         else:
             return False
 
     @staticmethod
-    def CheckIfSpectraArLSCorrected(spectra: Spectra, path: str, dirName: str):
+    def CheckIfSpectraArLSCorrected(spectraName: str, path: str, dirName: str):
         dirPath = os.path.join(path, dirName)
         if not os.path.exists(dirPath):
             return False
-        if os.path.exists(dirPath + spectra.name + ".CSV"):
+        if os.path.exists(dirPath + spectraName + ".CSV"):
             return True
         else:
             return False
@@ -216,14 +203,16 @@ class Manager:
     def deconvStretch(path: str, correctionMethod: str):
         vibrationDir = "stretch/"
         spectrasPath = os.path.join(path, vibrationDir + correctionMethod + "/")
+        print("Started deconvolution for " + spectrasPath)
         fileManager = FileManager(path=spectrasPath)
         spectraList = Manager.getSpectraList(manager=fileManager)
         gaussParams = GaussParams()
         lorentzParams = LorentzParams()
         funcGauss = fn.gauss4term
         funcLorentz = fn.lorentz4term
-        print("Performing stretch deconvolution")
         for spectra in spectraList:
+            if os.path.exists(spectrasPath + spectra.name + ".CSV") and os.path.exists(spectrasPath + spectra.name + ".CSV"):
+                continue
             try:
                 poptGauss, _ = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
                                          p0=gaussParams.c1_inits, bounds=gaussParams.c1_bounds)
@@ -237,12 +226,14 @@ class Manager:
                                          poptLorentz[4], poptLorentz[5], poptLorentz[6], poptLorentz[7], poptLorentz[8],
                                          poptLorentz[9], poptLorentz[10], poptLorentz[11])
             except RuntimeError:
-                print("Optimal parameters not found, continuing")
+                print("Optimal parameters not found for " + spectra.name + ", continuing")
                 continue
 
             graph = Graph(spectra=spectra, dpi=250)
             graph.plotDeconvFit(spectra=spectra, fit=fitGauss, path=spectrasPath + "gauss/", override=False)
             graph.plotDeconvFit(spectra=spectra, fit=fitLorentz, path=spectrasPath + "lorentz/", override=False)
+
+        print("Finished deconvolution for " + spectrasPath)
 
 
 
@@ -258,6 +249,8 @@ class Manager:
         funcLorentz = fn.lorentz4term
         print("Performing bend deconvolution")
         for spectra in spectraList:
+            if os.path.exists(spectrasPath + spectra.name + ".CSV") and os.path.exists(spectrasPath + spectra.name + ".CSV"):
+                continue
             try:
                 poptGauss, _ = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
                                      p0=gaussParams.c2_inits, bounds=gaussParams.c2_bounds)
@@ -290,6 +283,8 @@ class Manager:
         funcLorentz = fn.lorentz2term
         print("Performing ccstretch deconvolution")
         for spectra in spectraList:
+            if os.path.exists(spectrasPath + spectra.name + ".CSV") and os.path.exists(spectrasPath + spectra.name + ".CSV"):
+                continue
             try:
                 poptGauss, _ = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
                                          p0=gaussParams.c3_inits, bounds=gaussParams.c3_bounds)
@@ -319,6 +314,8 @@ class Manager:
         funcLorentz = fn.lorentz2term
         print("Performing ccstretch deconvolution")
         for spectra in spectraList:
+            if os.path.exists(spectrasPath + spectra.name + ".CSV") and os.path.exists(spectrasPath + spectra.name + ".CSV"):
+                continue
             try:
                 poptGauss, _ = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
                                          p0=gaussParams.c4_inits, bounds=gaussParams.c4_bounds)
@@ -384,8 +381,8 @@ class Manager:
     @staticmethod
     def calculateRawCryst3(path: str, probeType: str):
         fileName = "cryst3-" + probeType + "-raw.CSV"
-        if os.path.exists(fileName):
-            return
+        #if os.path.exists(fileName):
+        #    return
         spectrasDir1 = "bend/"
         spectrasDir2 = "twist/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
@@ -406,16 +403,16 @@ class Manager:
                     bendPeakPosition = spectraBend.findPeakDifferences(signal=signals[0])[1]
                     twistPeakPosition = spectraTwist.findPeakDifferences(signal=signals[1])[1]
                     bendIntensity = spectraBend.intensities[np.where(spectraBend.shifts == bendPeakPosition)]
-                    twistIntensity = spectraTwist.intensities[np.where(spectraTwist.shifts == bendPeakPosition)]
+                    twistIntensity = spectraTwist.intensities[np.where(spectraTwist.shifts == twistPeakPosition)]
                     cryst = bendIntensity / twistIntensity
-                    file.write(str(cryst)+'\n')
+                    file.write(str(cryst).replace("[", "").replace("]", "") +'\n')
         file.close()
 
     @staticmethod
     def calculateRawCryst4(path: str, probeType: str):
         fileName = "cryst4-" + probeType + "-raw.CSV"
-        if os.path.exists(fileName):
-            return
+        #if os.path.exists(fileName):
+        #    return
         spectrasDir1 = "bend/"
         spectrasDir2 = "ccstretch/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
@@ -430,16 +427,17 @@ class Manager:
         for spectraCcstretch in ccstretchSpectraList:
             for spectraBend in bendSpectraList:
                 if spectraBend.name == spectraCcstretch.name:
-                    intensitiesForCryst = np.array([])
                     spectraBend.findPeaks()
                     spectraCcstretch.findPeaks()
                     bendPeakPosition = spectraBend.findPeakDifferences(signal=signals[0])[1]
-                    twistPeakPosition = spectraCcstretch.findPeakDifferences(signal=signals[1])[1]
+                    ccStretchPeakPosition = spectraCcstretch.findPeakDifferences(signal=signals[1])[1]
                     bendIntensity = spectraBend.intensities[np.where(spectraBend.shifts == bendPeakPosition)]
-                    twistIntensity = spectraCcstretch.intensities[np.where(spectraCcstretch.shifts == bendPeakPosition)]
-                    cryst = bendIntensity / twistIntensity
-                    file.write(str(cryst)+'\n')
+                    ccStretchIntensity = spectraCcstretch.intensities[np.where(spectraCcstretch.shifts == ccStretchPeakPosition)]
+                    cryst = bendIntensity / ccStretchIntensity
+                    print(type(cryst))
+                    file.write(str(cryst).replace("[", "").replace("]", "") +'\n')
         file.close()
+
     @staticmethod
     def calculateRawCrysts(path: str, probeType: str):
         print("Calculating raw cryst 1 for " + probeType)
