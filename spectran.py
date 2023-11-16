@@ -23,12 +23,11 @@ if __name__ == '__main__':
                                                                         limits=fragments.rangeLimits[index],
                                                                         suffix=fragments.rangeNames[index])
             dirName = fragments.rangeNames[index] + "/"
-            if True:
-                Manager.graphSpectras(limits=fragments.rangeLimits[index],
-                                      spectras=croppedSpectras,
-                                      path=path,
-                                      dirName=dirName,
-                                      override=override)
+            Manager.graphSpectras(limits=fragments.rangeLimits[index],
+                                  spectras=croppedSpectras,
+                                  path=path,
+                                  dirName=dirName,
+                                  override=override)
             for spectra in croppedSpectras:
                 spectra.findPeaks()
                 saveRS = False
@@ -41,8 +40,6 @@ if __name__ == '__main__':
                             os.mkdir(folderPath)
 
                         peakStats = spectra.findPeakDifferences(signal = values[1])
-                        # print("Found diff: " + str(peakStats[0]) + " with position: " + str(peakStats[1]) +
-                        #      " for reference: " + str(values[1]))
                         if saveRS:
                             print("Saving rs stability data to: " + newFilePath)
                             Manager.savePeakStats(filePath = newFilePath, stats = peakStats)
@@ -70,8 +67,10 @@ if __name__ == '__main__':
 
     for probeType in probeTypeDirs:
         path = os.path.join(rootFolder, probeType + "csvCombined/")
-        Manager.calculateRawCrysts(path = path, probeType = probeType.replace("/", ""))
-        Manager.deconv(path = path)
+        #Manager.calculateRawCrysts(path = path, probeType = probeType.replace("/", ""))
+        #Manager.deconv(path = path)
+        print("Starting calculating deconv crysts")
+        Manager.calculateDeconvCrysts(path = path, probeType = probeType)
         # preparation for deconvolution
         # TO DO:
         # 0) Shift stability (to copy + eventually some corrections) DONE
