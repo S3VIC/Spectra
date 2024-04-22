@@ -110,10 +110,11 @@ class Manager:
         spectra.arLSIntensities = newSignal
 
     @staticmethod
-    def saveAsLSCorrection(spectra: Spectra, path: str, dirName: str, override: bool, plot: bool):
+    def saveAsLSCorrection(spectra: Spectra, path: str, dirName: str, override: bool, plot: bool, lamb: str, term: str):
         dirPath = os.path.join(path, dirName)
+        dirPath = dirPath + lamb + "/" + term + "/"
         if not os.path.exists(dirPath):
-            os.mkdir(dirPath)
+            os.makedirs(dirPath)
         filePath = dirPath + spectra.name + ".CSV"
         if os.path.exists(filePath) and (not override):
             return
@@ -127,10 +128,11 @@ class Manager:
         file.close()
 
     @staticmethod
-    def saveArLSCorrection(spectra: Spectra, path: str, dirName: str, override: bool, plot: bool):
+    def saveArLSCorrection(spectra: Spectra, path: str, dirName: str, override: bool, plot: bool, lamb: str, weight: str):
         dirPath = os.path.join(path, dirName)
+        dirPath = dirPath + lamb + "/" + weight + "/"
         if not os.path.exists(dirPath):
-            os.mkdir(dirPath)
+            os.makedirs(dirPath)
         filePath = dirPath + spectra.name + ".CSV"
         if os.path.exists(filePath) and (not override):
             return
@@ -459,17 +461,18 @@ class Manager:
             graph.plotDeconvFit(spectra=spectra, fit=fitLorentz, path=spectrasPath + "lorentz/", override=False)
 
     @staticmethod
-    def calculateRawCryst1(path: str, probeType: str):
-        fileName = "cryst1-" + probeType + "-raw.CSV"
+    def calculateRawCryst1(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+        fileName = "cryst1-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir = "stretch/"
+        spectrasDir = "stretch/" + param1 + "/" + param2 + "/"
         spectrasPath = os.path.join(path, spectrasDir)
         fileManager = FileManager(spectrasPath)
         spectraList = Manager.getSpectraList(fileManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_str_sym'], SignalsDict['CH3_str_asym']])
-        file = open(fileName, "w")
+        filePath = os.path.join(pathToSave, fileName)
+        file = open(filePath, "w")
         for spectra in spectraList:
             intensitiesForCryst = np.array([])
             spectra.findPeaks()
@@ -482,17 +485,18 @@ class Manager:
         file.close()
 
     @staticmethod
-    def calculateRawCryst2(path: str, probeType: str):
-        fileName = "cryst2-" + probeType + "-raw.CSV"
+    def calculateRawCryst2(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+        fileName = "cryst2-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir = "bend/"
+        spectrasDir = "bend/" + param1 + "/" + param2 + "/"
         spectrasPath = os.path.join(path, spectrasDir)
         fileManager = FileManager(spectrasPath)
         spectraList = Manager.getSpectraList(fileManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CH2_ben_amorf']])
-        file = open(fileName, "w")
+        filePath = os.path.join(pathToSave, fileName)
+        file = open(filePath, "w")
         for spectra in spectraList:
             intensitiesForCryst = np.array([])
             spectra.findPeaks()
@@ -505,12 +509,12 @@ class Manager:
         file.close()
 
     @staticmethod
-    def calculateRawCryst3(path: str, probeType: str):
-        fileName = "cryst3-" + probeType + "-raw.CSV"
+    def calculateRawCryst3(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+        fileName = "cryst3-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir1 = "bend/"
-        spectrasDir2 = "twist/"
+        spectrasDir1 = "bend/" + param1 + "/" + param2 + "/"
+        spectrasDir2 = "twist/" + param1 + "/" + param2 + "/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
         spectrasPath2 = os.path.join(path, spectrasDir2)
         bendSpectrasManager = FileManager(spectrasPath1)
@@ -519,7 +523,8 @@ class Manager:
         twistSpectraList = Manager.getSpectraList(twistSpectrasManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CH2_twist_amorf']])
-        file = open(fileName, "w")
+        filePath = os.path.join(pathToSave, fileName)
+        file = open(filePath, "w")
         for spectraTwist in twistSpectraList:
             for spectraBend in bendSpectraList:
                 if spectraBend.name == spectraTwist.name:
@@ -534,12 +539,12 @@ class Manager:
         file.close()
 
     @staticmethod
-    def calculateRawCryst4(path: str, probeType: str):
-        fileName = "cryst4-" + probeType + "-raw.CSV"
+    def calculateRawCryst4(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+        fileName = "cryst4-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir1 = "bend/"
-        spectrasDir2 = "ccstretch/"
+        spectrasDir1 = "bend/" + param1 + "/" + param2 + "/"
+        spectrasDir2 = "ccstretch/" + param1 + "/" + param2 + "/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
         spectrasPath2 = os.path.join(path, spectrasDir2)
         bendSpectrasManager = FileManager(spectrasPath1)
@@ -548,7 +553,8 @@ class Manager:
         ccstretchSpectraList = Manager.getSpectraList(ccstretchSpectrasManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CC_str_amorf']])
-        file = open(fileName, "w")
+        filePath = os.path.join(pathToSave, fileName)
+        file = open(filePath, "w")
         for spectraCcstretch in ccstretchSpectraList:
             for spectraBend in bendSpectraList:
                 if spectraBend.name == spectraCcstretch.name:
@@ -565,11 +571,11 @@ class Manager:
         file.close()
 
     @staticmethod
-    def calculateRawCrysts(path: str, probeType: str):
-        Manager.calculateRawCryst1(path, probeType)
-        Manager.calculateRawCryst2(path, probeType)
-        Manager.calculateRawCryst3(path, probeType)
-        Manager.calculateRawCryst4(path, probeType)
+    def calculateRawCrysts(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+        Manager.calculateRawCryst1(path, probeType, param1, param2, pathToSave)
+        Manager.calculateRawCryst2(path, probeType, param1, param2, pathToSave)
+        Manager.calculateRawCryst3(path, probeType, param1, param2, pathToSave)
+        Manager.calculateRawCryst4(path, probeType, param1, param2, pathToSave)
 
 
     @staticmethod

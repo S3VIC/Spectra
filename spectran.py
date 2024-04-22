@@ -9,68 +9,86 @@ from src.manager import Manager
 
 if __name__ == '__main__':
     rootFolder = "data/"
-    probeTypeDirs = ["archival/", "dyneema/", "medit/", "vistula/", "wzorzec/", "wzorzec_miliQ/"]
+    #probeTypeDirs = ["archival/", "dyneema/", "medit/", "vistula/", "wzorzec/", "wzorzec_miliQ/"]
+    probeTypeDirs = ["wzorzec/", "dyneema/"]
     vibrationTypeDirs = ["bend/", "ccstretch/", "stretch/", "twist/"]
     correctionMethodDirs = ["asLS/", "arLS/"]
-    override = False
-    for folder in probeTypeDirs:
-        path = os.path.join(rootFolder, folder + "csvCombined/")
-        fileManager = FileManager(path=path)
-        spectraList: List[Spectra] = Manager.getSpectraList(manager=fileManager)
-        fragments: SpectraFragments = SpectraFragments()
-        for index in range(len(fragments.rangeNames)):
-            croppedSpectras: List[Spectra] = Manager.getCroppedSpectras(spectras=spectraList,
-                                                                        limits=fragments.rangeLimits[index],
-                                                                        suffix=fragments.rangeNames[index])
-            dirName = fragments.rangeNames[index] + "/"
-            Manager.graphSpectras(limits=fragments.rangeLimits[index],
-                                  spectras=croppedSpectras,
-                                  path=path,
-                                  dirName=dirName,
-                                  override=override)
-            for spectra in croppedSpectras:
-                spectra.findPeaks()
-                saveRS = False
-                for name, values in fragments.signals.items():
-                    if values[0] == index + 1:
-                        dataFileName = name + "_rs_stability.CSV"
-                        folderPath = rootFolder + folder + "rsStability/"
-                        newFilePath = folderPath + dataFileName
-                        if not os.path.isdir(folderPath) and saveRS:
-                            os.mkdir(folderPath)
+    override = True
+    lambdaRange = [3e5, 3e6, 3e7, 3e8, 3e9]
+    asLS_termPrecissionRange = [0.2, 0.21, 0.22, 0.23, 0.24, 0.25, 0.26, 0.27, 0.28, 0.29, 0.30, 0.31, 0.32, 0.33, 0.34, 0.35]
+    asymWeightRange = [0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]
+    #for folder in probeTypeDirs:
+    #    path = os.path.join(rootFolder, folder + "csvCombined/")
+    #    fileManager = FileManager(path=path)
+    #    spectraList: List[Spectra] = Manager.getSpectraList(manager=fileManager)
+    #    fragments: SpectraFragments = SpectraFragments()
+    #    for index in range(len(fragments.rangeNames)):
+    #        croppedSpectras: List[Spectra] = Manager.getCroppedSpectras(spectras=spectraList,
+    #                                                                    limits=fragments.rangeLimits[index],
+    #                                                                    suffix=fragments.rangeNames[index])
+    #        dirName = fragments.rangeNames[index] + "/"
+    #        Manager.graphSpectras(limits=fragments.rangeLimits[index],
+    #                              spectras=croppedSpectras,
+    #                              path=path,
+    #                              dirName=dirName,
+    #                              override=False)
+    #        for spectra in croppedSpectras:
+    #            spectra.findPeaks()
+    #            saveRS = False
+    #            for name, values in fragments.signals.items():
+    #                if values[0] == index + 1:
+    #                    dataFileName = name + "_rs_stability.CSV"
+    #                    folderPath = rootFolder + folder + "rsStability/"
+    #                    newFilePath = folderPath + dataFileName
+    #                    if not os.path.isdir(folderPath) and saveRS:
+    #                        os.mkdir(folderPath)
 
-                        peakStats = spectra.findPeakDifferences(signal = values[1])
-                        if saveRS:
-                            print("Saving rs stability data to: " + newFilePath)
-                            Manager.savePeakStats(filePath = newFilePath, stats = peakStats)
-                    else:
-                        continue
+    #                    peakStats = spectra.findPeakDifferences(signal = values[1])
+    #                    if saveRS:
+    #                        print("Saving rs stability data to: " + newFilePath)
+    #                        Manager.savePeakStats(filePath = newFilePath, stats = peakStats)
+    #                else:
+    #                    continue
 
-                spectrasPath = path + dirName
+    #            spectrasPath = path + dirName
 
-                if not Manager.CheckIfSpectraAsLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "asLS/"):
-                    Manager.correctAsLS(spectra = spectra, lamb = 3e8, termPrecision=0.32)
-                    Manager.saveAsLSCorrection(spectra = spectra, path = spectrasPath, dirName = "asLS/",
-                                               override = True, plot = True)
-                else:
-                    spectra.LoadAsLSCorrection(path = spectrasPath, dirName = "asLS/")
+    #            if not Manager.CheckIfSpectraAsLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "asLS/") or override:
+    #                for lamb in lambdaRange:
+    #                    for termPrecission in asLS_termPrecissionRange:
+    #                        print(f"Performing asLS for:\nlamd={lamb}\nterm={termPrecission}\n")
+    #                        Manager.correctAsLS(spectra = spectra, lamb = lamb, termPrecision=termPrecission)
+    #                        Manager.saveAsLSCorrection(spectra = spectra, path = spectrasPath, dirName = "asLS/",
+    #                                                   override = False, plot = True, lamb=str(lamb), term=str(termPrecission))
+    #            else:
+    #                spectra.LoadAsLSCorrection(path = spectrasPath, dirName = "asLS/")
 
-                if not Manager.CheckIfSpectraArLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "arLS/"):
-                    Manager.correctArLS(spectra = spectra, lam = 3e8, asymWeight = 0.01)
-                    Manager.saveArLSCorrection(spectra = spectra, path = spectrasPath, dirName = "arLS/",
-                                               override = True, plot = True)
-                else:
-                    spectra.LoadArLSCorrection(path = spectrasPath, dirName = "arLS/")
+    #            if not Manager.CheckIfSpectraArLSCorrected(spectraName = spectra.name, path = spectrasPath, dirName = "arLS/") or override:
+    #                for lamb in lambdaRange:
+    #                    for weight in asymWeightRange:
+    #                        print(f"Performing asLS for:\nlamd={lamb}\nweight={weight}\n")
+    #                        Manager.correctArLS(spectra = spectra, lam = lamb, asymWeight = weight)
+    #                        Manager.saveArLSCorrection(spectra = spectra, path = spectrasPath, dirName = "arLS/",
+    #                                               override = False, plot = True, lamb=str(lamb), weight=str(weight))
+    #            else:
+    #                spectra.LoadArLSCorrection(path = spectrasPath, dirName = "arLS/")
 
-                Manager.saveArLSAsLSComparison(spectra = spectra, path = spectrasPath, dirName = "methodComparison/",
-                                               override = False, plot = False)
+                #Manager.saveArLSAsLSComparison(spectra = spectra, path = spectrasPath, dirName = "methodComparison/",
+                #                               override = False, plot = False)
 
     for probeType in probeTypeDirs:
-        path = os.path.join(rootFolder, probeType + "csvCombined/")
-        #Manager.calculateRawCrysts(path = path, probeType = probeType.replace("/", ""))
-        #Manager.deconv(path = path)
-        print("Starting calculating deconv crysts")
-        Manager.calculateDeconvCrysts(path = path, probeType = probeType)
+        for method in correctionMethodDirs:
+            path = os.path.join(rootFolder, probeType + "csvCombined/" + method)
+            for lamb in lambdaRange:
+                for weight in asymWeightRange:
+                    Manager.calculateRawCrysts(path = path, probeType = probeType.replace("/", ""), param1 = str(lamb), param2 = str(weight), pathToSave=method +  '_' + str(lamb) + '_' + str(weight))
+
+            #Manager.deconv(path = path)
+            #print("Starting calculating deconv crysts")
+            #Manager.calculateDeconvCrysts(path = path, probeType = probeType)
+
+
+
+
         # preparation for deconvolution
         # TO DO:
         # 0) Shift stability (to copy + eventually some corrections) DONE
