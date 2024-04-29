@@ -9,8 +9,10 @@ from src.manager import Manager
 
 if __name__ == '__main__':
     rootFolder = "data/"
+    rootOutputDeconvPath = "/home/sewik/source/repos/Spectra/deconv/"
     #probeTypeDirs = ["archival/", "dyneema/", "medit/", "vistula/", "wzorzec/", "wzorzec_miliQ/"]
-    probeTypeDirs = ["wzorzec/", "dyneema/"]
+    #probeTypeDirs = ["wzorzec/", "dyneema/"]
+    probeTypeDirs = ["archival/", "medit/", "vistula/", "dyneema/", "wzorzec/"]
     vibrationTypeDirs = ["bend/", "ccstretch/", "stretch/", "twist/"]
     correctionMethodDirs = ["asLS/", "arLS/"]
     override = True
@@ -75,16 +77,29 @@ if __name__ == '__main__':
                 #Manager.saveArLSAsLSComparison(spectra = spectra, path = spectrasPath, dirName = "methodComparison/",
                 #                               override = False, plot = False)
 
+    #for probeType in probeTypeDirs:
+    #    for method in correctionMethodDirs:
+    #        path = os.path.join(rootFolder, probeType + "csvCombined/")
+    #        if method == 'asLS/':
+    #            param2Values = asLS_termPrecissionRange
+    #        else:
+    #            param2Values = asymWeightRange
+    #        for lamb in lambdaRange:
+    #            for param2 in param2Values:
+    #                Manager.calculateRawCrysts(
+    #                    path = path,
+    #                    probeType = probeType.replace("/", ""),
+    #                    param1 = str(lamb),
+    #                    param2 = str(param2),
+    #                    pathToSave=method + probeType + str(lamb),
+    #                    method = method
+    #                )
     for probeType in probeTypeDirs:
         for method in correctionMethodDirs:
-            path = os.path.join(rootFolder, probeType + "csvCombined/" + method)
-            for lamb in lambdaRange:
-                for weight in asymWeightRange:
-                    Manager.calculateRawCrysts(path = path, probeType = probeType.replace("/", ""), param1 = str(lamb), param2 = str(weight), pathToSave=method +  '_' + str(lamb) + '_' + str(weight))
-
-            #Manager.deconv(path = path)
-            #print("Starting calculating deconv crysts")
-            #Manager.calculateDeconvCrysts(path = path, probeType = probeType)
+            path = os.path.join(rootFolder, probeType, "csvCombined")
+            Manager.deconv(path = path, lambdaRange = lambdaRange, asLSSecond = asLS_termPrecissionRange, arLSSecond = asymWeightRange, rootOutputPath = rootOutputDeconvPath)
+            print("Starting calculating deconv crysts")
+            Manager.calculateDeconvCrysts(path = path, probeType = probeType)
 
 
 

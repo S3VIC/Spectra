@@ -1,6 +1,5 @@
 from src.spectra import Spectra
 from src.fileManager import FileManager
-from src.logger import Logger
 from src.graph import Graph
 import numpy as np
 from typing import List
@@ -192,88 +191,98 @@ class Manager:
         spectra.asLSIntensities = np.array(data[:, 1], dtype='float')
 
     @staticmethod
-    def deconv(path: str):
-        Manager.deconvStretch(path=path, correctionMethod="asLS")
-        Manager.deconvStretch(path=path, correctionMethod="arLS")
-        Manager.deconvBend(path=path, correctionMethod="asLS")
-        Manager.deconvBend(path=path, correctionMethod="arLS")
-        Manager.deconvTwist(path=path, correctionMethod="asLS")
-        Manager.deconvTwist(path=path, correctionMethod="arLS")
-        Manager.deconvCcstretch(path=path, correctionMethod="asLS")
-        Manager.deconvCcstretch(path=path, correctionMethod="arLS")
+    def deconv(path: str, lambdaRange, asLSSecond, arLSSecond, rootOutputPath):
+        Manager.deconvStretch(path=path, correctionMethod="asLS", lambdaRange = lambdaRange, secondParamRange = asLSSecond, rootOutputPath = rootOutputPath)
+        Manager.deconvStretch(path=path, correctionMethod="arLS", lambdaRange = lambdaRange, secondParamRange = arLSSecond, rootOutputPath = rootOutputPath)
+        #Manager.deconvBend(path=path, correctionMethod="asLS", lambdaRange, asLSSecond)
+        #Manager.deconvBend(path=path, correctionMethod="arLS", lambdaRange, arLSSecond)
+        #Manager.deconvTwist(path=path, correctionMethod="asLS", lambdaRange, asLSSecond)
+        #Manager.deconvTwist(path=path, correctionMethod="arLS", lambdaRange, arLSSecond)
+        #Manager.deconvCcstretch(path=path, correctionMethod="asLS", lambdaRange, asLSSecond)
+        #Manager.deconvCcstretch(path=path, correctionMethod="arLS", lambdaRange, arLSSecond)
 
     @staticmethod
-    def deconvStretch(path: str, correctionMethod: str):
-        vibrationDir = "stretch/"
-        spectrasPath = os.path.join(path, vibrationDir + correctionMethod + "/")
-        gaussDeconvPath = spectrasPath + "gauss/"
-        lorentzDeconvPath = spectrasPath + "lorentz/"
-        if not os.path.exists(gaussDeconvPath):
-            os.mkdir(gaussDeconvPath)
-        if not os.path.exists(lorentzDeconvPath):
-            os.mkdir(lorentzDeconvPath)
-        print("Started deconvolution for " + spectrasPath)
-        fileManager = FileManager(path=spectrasPath)
-        spectraList = Manager.getSpectraList(manager=fileManager)
-        gaussParams = GaussParams()
-        lorentzParams = LorentzParams()
-        funcGauss = fn.gauss4term
-        funcLorentz = fn.lorentz4term
-        for spectra in spectraList:
-            #if os.path.exists(spectrasPath + "gauss/" + spectra.name + ".CSV") and os.path.exists(
-            #        spectrasPath + "gauss/" + spectra.name + ".CSV"):
-            #    continue
-            try:
-                poptGauss = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
-                                      p0=gaussParams.c1_inits, bounds=gaussParams.c1_bounds)[0]
-                fitGauss = funcGauss(spectra.shifts, poptGauss[0], poptGauss[1], poptGauss[2], poptGauss[3],
-                                     poptGauss[4],
-                                     poptGauss[5], poptGauss[6], poptGauss[7], poptGauss[8], poptGauss[9],
-                                     poptGauss[10],
-                                     poptGauss[11])
+    def deconvStretch(path: str, correctionMethod: str, lambdaRange, secondParamRange, rootOutputPath):
+        vibrationDir = "stretch"
+        gaussName = "gauss"
+        lorentzName = "lorentz"
+        for lambdaParam in lambdaRange:
+            for secondParam in secondParamRange:
+                spectrasPath = os.path.join(path, vibrationDir, correctionMethod, str(lambdaParam), str(secondParam) + "/")
+                gaussDeconvPath = os.path.join(rootOutputPath, gaussName)
+                lorentzDeconvPath = os.path.join(spectrasPath, lorentzName)
+                if not os.path.exists(gaussDeconvPath):
+                    os.makedirs(gaussDeconvPath)
+                if not os.path.exists(lorentzDeconvPath):
+                    os.makedirs(lorentzDeconvPath)
+                print("Started deconvolution for " + spectrasPath)
+                fileManager = FileManager(path=spectrasPath)
+                spectraList = Manager.getSpectraList(manager=fileManager)
+                gaussParams = GaussParams()
+                lorentzParams = LorentzParams()
+                funcGauss = fn.gauss4term
+                funcLorentz = fn.lorentz4term
+                for spectra in spectraList:
+                    #if os.path.exists(spectrasPath + "gauss/" + spectra.name + ".CSV") and os.path.exists(
+                    #        spectrasPath + "gauss/" + spectra.name + ".CSV"):
+                    #    continue
+                    try:
+                        poptGauss = curve_fit(f=funcGauss, xdata=spectra.shifts, ydata=spectra.intensities,
+                                              p0=gaussParams.c1_inits, bounds=gaussParams.c1_bounds)[0]
+                        fitGauss = funcGauss(spectra.shifts, poptGauss[0], poptGauss[1], poptGauss[2], poptGauss[3],
+                                             poptGauss[4],
+                                             poptGauss[5], poptGauss[6], poptGauss[7], poptGauss[8], poptGauss[9],
+                                             poptGauss[10],
+                                             poptGauss[11])
 
-                poptLorentz = curve_fit(f=funcLorentz, xdata=spectra.shifts, ydata=spectra.intensities,
-                                        p0=lorentzParams.c1_inits, bounds=lorentzParams.c1_bounds)[0]
-                fitLorentz = funcLorentz(spectra.shifts, poptLorentz[0], poptLorentz[1], poptLorentz[2], poptLorentz[3],
-                                         poptLorentz[4], poptLorentz[5], poptLorentz[6], poptLorentz[7], poptLorentz[8],
-                                         poptLorentz[9], poptLorentz[10], poptLorentz[11])
+                        poptLorentz = curve_fit(f=funcLorentz, xdata=spectra.shifts, ydata=spectra.intensities,
+                                                p0=lorentzParams.c1_inits, bounds=lorentzParams.c1_bounds)[0]
+                        fitLorentz = funcLorentz(spectra.shifts, poptLorentz[0], poptLorentz[1], poptLorentz[2], poptLorentz[3],
+                                                 poptLorentz[4], poptLorentz[5], poptLorentz[6], poptLorentz[7], poptLorentz[8],
+                                                 poptLorentz[9], poptLorentz[10], poptLorentz[11])
 
-                gauss1 = fn.Gauss(spectra.shifts, poptGauss[0], poptGauss[1], poptGauss[2])
-                gauss2 = fn.Gauss(spectra.shifts, poptGauss[3], poptGauss[4], poptGauss[5])
-                gauss3 = fn.Gauss(spectra.shifts, poptGauss[6], poptGauss[7], poptGauss[8])
-                gauss4 = fn.Gauss(spectra.shifts, poptGauss[9], poptGauss[10], poptGauss[11])
-                gaussFile = open(spectrasPath + "gauss/" + spectra.name + ".CSV", "w")
-                for index in range(len(spectra.shifts)):
-                    gaussFile.write(str(spectra.shifts[index]) + "," + str(gauss1[index]) + "," + str(gauss2[index]) + "," +
-                                    str(gauss3[index]) + "," + str(gauss4[index]) +
-                                    "," + str(poptGauss[0]) + "," + str(poptGauss[1]) + "," + str(poptGauss[2]) + ","
-                                    + str(poptGauss[3]) + "," + str(poptGauss[4]) + "," + str(poptGauss[5]) +
-                                    "," + str(poptGauss[6]) + "," + str(poptGauss[7]) + "," + str(poptGauss[8]) + ","
-                                    + str(poptGauss[9]) + "," + str(poptGauss[10]) + "," + str(poptGauss[11]) + '\n')
+                        gauss1 = fn.Gauss(spectra.shifts, poptGauss[0], poptGauss[1], poptGauss[2])
+                        gauss2 = fn.Gauss(spectra.shifts, poptGauss[3], poptGauss[4], poptGauss[5])
+                        gauss3 = fn.Gauss(spectra.shifts, poptGauss[6], poptGauss[7], poptGauss[8])
+                        gauss4 = fn.Gauss(spectra.shifts, poptGauss[9], poptGauss[10], poptGauss[11])
+                        gaussFilePath = os.path.join(gaussDeconvPath, str(lambdaParam), str(secondParam) + "/")
+                        if not os.path.exists(gaussFilePath):
+                            os.makedirs(gaussFilePath)
+                        gaussFile = open(gaussFilePath + spectra.name + ".CSV", "w")
+                        for index in range(len(spectra.shifts)):
+                            gaussFile.write(str(spectra.shifts[index]) + "," + str(gauss1[index]) + "," + str(gauss2[index]) + "," +
+                                            str(gauss3[index]) + "," + str(gauss4[index]) +
+                                            "," + str(poptGauss[0]) + "," + str(poptGauss[1]) + "," + str(poptGauss[2]) + ","
+                                            + str(poptGauss[3]) + "," + str(poptGauss[4]) + "," + str(poptGauss[5]) +
+                                            "," + str(poptGauss[6]) + "," + str(poptGauss[7]) + "," + str(poptGauss[8]) + ","
+                                            + str(poptGauss[9]) + "," + str(poptGauss[10]) + "," + str(poptGauss[11]) + '\n')
 
-                lorentz1 = fn.Lorentz(spectra.shifts, poptLorentz[0], poptLorentz[1], poptLorentz[2])
-                lorentz2 = fn.Lorentz(spectra.shifts, poptLorentz[3], poptLorentz[4], poptLorentz[5])
-                lorentz3 = fn.Lorentz(spectra.shifts, poptLorentz[6], poptLorentz[7], poptLorentz[8])
-                lorentz4 = fn.Lorentz(spectra.shifts, poptLorentz[9], poptLorentz[10], poptLorentz[11])
-                lorentzFile = open(spectrasPath + "lorentz/" + spectra.name + ".CSV", "w")
-                for index in range(len(spectra.shifts)):
-                    lorentzFile.write(
-                        str(spectra.shifts[index]) + "," + str(lorentz1[index]) + "," + str(lorentz2[index]) + "," +
-                        str(lorentz3[index]) + "," + str(lorentz4[index]) +
-                        "," + str(poptLorentz[0]) + "," + str(poptLorentz[1]) + "," + str(poptLorentz[2]) + ","
-                        + str(poptLorentz[3]) + "," + str(poptLorentz[4]) + "," + str(poptLorentz[5]) +
-                        "," + str(poptLorentz[6]) + "," + str(poptLorentz[7]) + "," + str(poptLorentz[8]) + ","
-                        + str(poptLorentz[9]) + "," + str(poptLorentz[10]) + "," + str(poptLorentz[11]) + '\n')
+                        lorentz1 = fn.Lorentz(spectra.shifts, poptLorentz[0], poptLorentz[1], poptLorentz[2])
+                        lorentz2 = fn.Lorentz(spectra.shifts, poptLorentz[3], poptLorentz[4], poptLorentz[5])
+                        lorentz3 = fn.Lorentz(spectra.shifts, poptLorentz[6], poptLorentz[7], poptLorentz[8])
+                        lorentz4 = fn.Lorentz(spectra.shifts, poptLorentz[9], poptLorentz[10], poptLorentz[11])
+                        lorentzFilePath = os.path.join(gaussDeconvPath, str(lambdaParam), str(secondParam) + "/")
+                        if not os.path.exists(lorentzFilePath):
+                            os.makedirs(lorentzFilePath)
+                        lorentzFile = open(lorentzFilePath + spectra.name + ".CSV", "w")
+                        for index in range(len(spectra.shifts)):
+                            lorentzFile.write(
+                                str(spectra.shifts[index]) + "," + str(lorentz1[index]) + "," + str(lorentz2[index]) + "," +
+                                str(lorentz3[index]) + "," + str(lorentz4[index]) +
+                                "," + str(poptLorentz[0]) + "," + str(poptLorentz[1]) + "," + str(poptLorentz[2]) + ","
+                                + str(poptLorentz[3]) + "," + str(poptLorentz[4]) + "," + str(poptLorentz[5]) +
+                                "," + str(poptLorentz[6]) + "," + str(poptLorentz[7]) + "," + str(poptLorentz[8]) + ","
+                                + str(poptLorentz[9]) + "," + str(poptLorentz[10]) + "," + str(poptLorentz[11]) + '\n')
 
-            except RuntimeError:
-                print("Optimal parameters not found for " + spectra.name + ", continuing")
-                continue
+                    except RuntimeError:
+                        print("Optimal parameters not found for " + spectra.name + ", continuing")
+                        continue
 
-            graph = Graph(spectra=spectra, dpi=250)
-            graph.plotDeconvFit(spectra=spectra, fit=fitGauss, path=spectrasPath + "gauss/", override=False)
-            graph.plotDeconvFit(spectra=spectra, fit=fitLorentz, path=spectrasPath + "lorentz/", override=False)
+                    graph = Graph(spectra=spectra, dpi=250)
+                    graph.plotDeconvFit(spectra=spectra, fit=fitGauss, path=gaussFilePath, override=False)
+                    graph.plotDeconvFit(spectra=spectra, fit=fitLorentz, path=lorentzFilePath, override=False)
 
-        print("Finished deconvolution for " + spectrasPath)
+                print("Finished deconvolution for " + spectrasPath)
 
     @staticmethod
     def deconvBend(path: str, correctionMethod: str):
@@ -461,16 +470,18 @@ class Manager:
             graph.plotDeconvFit(spectra=spectra, fit=fitLorentz, path=spectrasPath + "lorentz/", override=False)
 
     @staticmethod
-    def calculateRawCryst1(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+    def calculateRawCryst1(path: str, probeType: str, param1: str, param2: str, pathToSave: str, method: str):
         fileName = "cryst1-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir = "stretch/" + param1 + "/" + param2 + "/"
+        spectrasDir = "stretch/" + method + param1 + "/" + param2 + "/"
         spectrasPath = os.path.join(path, spectrasDir)
         fileManager = FileManager(spectrasPath)
         spectraList = Manager.getSpectraList(fileManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_str_sym'], SignalsDict['CH3_str_asym']])
+        if not os.path.exists(pathToSave):
+            os.makedirs(pathToSave)
         filePath = os.path.join(pathToSave, fileName)
         file = open(filePath, "w")
         for spectra in spectraList:
@@ -481,21 +492,23 @@ class Manager:
                 intensitiesForCryst = np.append(intensitiesForCryst,
                                                 spectra.intensities[np.where(spectra.shifts == peakPosition)])
             cryst = intensitiesForCryst[0] / intensitiesForCryst[1]
-            file.write(str(cryst) + '\n')
+            file.write(spectra.name + '$' + str(cryst) + '\n')
         file.close()
 
     @staticmethod
-    def calculateRawCryst2(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+    def calculateRawCryst2(path: str, probeType: str, param1: str, param2: str, pathToSave: str, method: str):
         fileName = "cryst2-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir = "bend/" + param1 + "/" + param2 + "/"
+        spectrasDir = "bend/" + method + param1 + "/" + param2 + "/"
         spectrasPath = os.path.join(path, spectrasDir)
         fileManager = FileManager(spectrasPath)
         spectraList = Manager.getSpectraList(fileManager)
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CH2_ben_amorf']])
         filePath = os.path.join(pathToSave, fileName)
+        if not os.path.exists(pathToSave):
+            os.makedirs(pathToSave)
         file = open(filePath, "w")
         for spectra in spectraList:
             intensitiesForCryst = np.array([])
@@ -505,16 +518,16 @@ class Manager:
                 intensitiesForCryst = np.append(intensitiesForCryst,
                                                 spectra.intensities[np.where(spectra.shifts == peakPosition)])
             cryst = intensitiesForCryst[0] / intensitiesForCryst[1]
-            file.write(str(cryst) + '\n')
+            file.write(spectra.name + '$' + str(cryst) + '\n')
         file.close()
 
     @staticmethod
-    def calculateRawCryst3(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+    def calculateRawCryst3(path: str, probeType: str, param1: str, param2: str, pathToSave: str, method: str):
         fileName = "cryst3-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir1 = "bend/" + param1 + "/" + param2 + "/"
-        spectrasDir2 = "twist/" + param1 + "/" + param2 + "/"
+        spectrasDir1 = "bend/" + method + param1 + "/" + param2 + "/"
+        spectrasDir2 = "twist/" + method + param1 + "/" + param2 + "/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
         spectrasPath2 = os.path.join(path, spectrasDir2)
         bendSpectrasManager = FileManager(spectrasPath1)
@@ -524,6 +537,8 @@ class Manager:
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CH2_twist_amorf']])
         filePath = os.path.join(pathToSave, fileName)
+        if not os.path.exists(pathToSave):
+            os.makedirs(pathToSave)
         file = open(filePath, "w")
         for spectraTwist in twistSpectraList:
             for spectraBend in bendSpectraList:
@@ -535,16 +550,18 @@ class Manager:
                     bendIntensity = spectraBend.intensities[np.where(spectraBend.shifts == bendPeakPosition)]
                     twistIntensity = spectraTwist.intensities[np.where(spectraTwist.shifts == twistPeakPosition)]
                     cryst = bendIntensity / twistIntensity
-                    file.write(str(cryst).replace("[", "").replace("]", "") + '\n')
+                    if str(cryst) == '':
+                        break
+                    file.write(spectraBend.name + '$' + str(cryst).replace("[", "").replace("]", "") + '\n')
         file.close()
 
     @staticmethod
-    def calculateRawCryst4(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
+    def calculateRawCryst4(path: str, probeType: str, param1: str, param2: str, pathToSave: str, method: str):
         fileName = "cryst4-" + probeType + "-" + param1 + "-" + param2 + "-raw.CSV"
         if os.path.exists(fileName):
             return
-        spectrasDir1 = "bend/" + param1 + "/" + param2 + "/"
-        spectrasDir2 = "ccstretch/" + param1 + "/" + param2 + "/"
+        spectrasDir1 = "bend/" + method + param1 + "/" + param2 + "/"
+        spectrasDir2 = "ccstretch/" + method + param1 + "/" + param2 + "/"
         spectrasPath1 = os.path.join(path, spectrasDir1)
         spectrasPath2 = os.path.join(path, spectrasDir2)
         bendSpectrasManager = FileManager(spectrasPath1)
@@ -554,6 +571,8 @@ class Manager:
         SignalsDict = DiagnosticSignals.getSignalsDict()
         signals = np.array([SignalsDict['CH2_ben_cryst'], SignalsDict['CC_str_amorf']])
         filePath = os.path.join(pathToSave, fileName)
+        if not os.path.exists(pathToSave):
+            os.makedirs(pathToSave)
         file = open(filePath, "w")
         for spectraCcstretch in ccstretchSpectraList:
             for spectraBend in bendSpectraList:
@@ -567,15 +586,15 @@ class Manager:
                         np.where(spectraCcstretch.shifts == ccStretchPeakPosition)]
                     cryst = bendIntensity / ccStretchIntensity
                     print(type(cryst))
-                    file.write(str(cryst).replace("[", "").replace("]", "") + '\n')
+                    file.write(spectraBend.name + '$' + str(cryst).replace("[", "").replace("]", "") + '\n')
         file.close()
 
     @staticmethod
-    def calculateRawCrysts(path: str, probeType: str, param1: str, param2: str, pathToSave: str):
-        Manager.calculateRawCryst1(path, probeType, param1, param2, pathToSave)
-        Manager.calculateRawCryst2(path, probeType, param1, param2, pathToSave)
-        Manager.calculateRawCryst3(path, probeType, param1, param2, pathToSave)
-        Manager.calculateRawCryst4(path, probeType, param1, param2, pathToSave)
+    def calculateRawCrysts(path: str, probeType: str, param1: str, param2: str, pathToSave: str, method: str):
+        Manager.calculateRawCryst1(path, probeType, param1, param2, pathToSave, method)
+        Manager.calculateRawCryst2(path, probeType, param1, param2, pathToSave, method)
+        Manager.calculateRawCryst3(path, probeType, param1, param2, pathToSave, method)
+        Manager.calculateRawCryst4(path, probeType, param1, param2, pathToSave, method)
 
 
     @staticmethod
